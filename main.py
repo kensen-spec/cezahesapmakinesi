@@ -1,26 +1,21 @@
-import streamlit as st
+import tkinter as tk
+from tkinter import messagebox
 from math import floor, ceil
-from PIL import Image
-import os
 
-# Sayfa ayarı (Sadece sizin logonuz için)
-icon_yolu = "icon.ico"
-if os.path.exists(icon_yolu):
-    img = Image.open(icon_yolu)
-    st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon=img)
-else:
-    st.set_page_config(page_title="Ceza Hesap Makinesi")
+# ================= YARDIMCI =================
 
-# ================= SİZİN YARDIMCI FONKSİYONLARINIZ (BİREBİR) =================
 def kesir_oku(s):
     s = s.strip()
-    if "/" not in s: return None
+    if "/" not in s:
+        return None
     try:
         pay, payda = s.split("/")
         pay = int(pay)
         payda = int(payda)
-        if pay > 0 and payda > 0: return pay, payda
-    except: return None
+        if pay > 0 and payda > 0:
+            return pay, payda
+    except:
+        return None
     return None
 
 def gun_para_hesapla(gun, pay, payda, artis):
@@ -29,40 +24,31 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= HAFIZA (ZİNCİRLEME İŞLEM İÇİN) =================
-if 'yil' not in st.session_state: st.session_state.yil = 0
-if 'ay' not in st.session_state: st.session_state.ay = 0
-if 'gun' not in st.session_state: st.session_state.gun = 0
-if 'para' not in st.session_state: st.session_state.para = 0
+# ================= HESAPLAMA =================
 
-# ================= ARAYÜZ =================
-if os.path.exists(icon_yolu):
-    col_logo, col_text = st.columns([1, 4], vertical_alignment="center")
-    with col_logo: st.image(icon_yolu, width=100)
-    with col_text:
-        st.markdown(f"<h1>Ceza Hesap Makinesi</h1>", unsafe_allow_html=True)
-        st.markdown(f"<h3>Hakim Kenan Şenlik</h3>", unsafe_allow_html=True)
-
-# GİRİŞ ALANLARI (Sizin kodunuzdaki Entry'ler)
-e_yil = st.number_input("Yıl", value=int(st.session_state.yil), step=1)
-e_ay = st.number_input("Ay", value=int(st.session_state.ay), step=1)
-e_gun = st.number_input("Gün", value=int(st.session_state.gun), step=1)
-e_gun_para = st.number_input("Gün Para", value=int(st.session_state.para), step=1)
-e_oran = st.text_input("Oran", value="1/6")
-
-# ================= HESAPLA FONKSİYONU (SİZİN MANTIĞINIZ) =================
 def hesapla(artis):
-    kesir = kesir_oku(e_oran)
+    global islem_sayaci
+
+    try:
+        yil = int(e_yil.get() or 0)
+        ay = int(e_ay.get() or 0)
+        gun = int(e_gun.get() or 0)
+        gun_para = int(e_gun_para.get() or 0)
+    except ValueError:
+        messagebox.showerror("Hata", "Sayı alanlarına geçerli değer girin.")
+        return
+
+    kesir = kesir_oku(e_oran.get())
     if not kesir:
-        st.error("Oran geçersiz")
+        messagebox.showerror("Hata", "Oran geçersiz (örn: 1/6)")
         return
 
     pay, payda = kesir
-    yil, ay, gun = e_yil, e_ay, e_gun
-    
-    sonuc_yil, sonuc_ay, sonuc_gun = yil, ay, gun
 
-    # SİZİN ORİJİNAL MANTIĞINIZ (BİREBİR KOPYALANDI)
+    sonuc_yil = yil
+    sonuc_ay = ay
+    sonuc_gun = gun
+
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
     yil_degisim = (tam_yil // payda) * pay
@@ -98,23 +84,93 @@ def hesapla(artis):
         sonuc_yil -= yil_eksi
         sonuc_ay += yil_eksi * 12
 
-    # Kutucukları güncellemek için hafızaya yaz
-    st.session_state.yil = max(0, int(sonuc_yil))
-    st.session_state.ay = max(0, int(sonuc_ay))
-    st.session_state.gun = max(0, int(sonuc_gun))
-    st.session_state.para = int(gun_para_hesapla(e_gun_para, pay, payda, artis))
-    st.rerun()
+    sonuc_yil = max(0, int(sonuc_yil))
+    sonuc_ay = max(0, int(sonuc_ay))
+    sonuc_gun = max(0, int(sonuc_gun))
 
-# BUTONLAR
-col_btn1, col_btn2 = st.columns(2)
-with col_btn1:
-    if st.button("ARTIR", use_container_width=True, type="secondary"): hesapla(True)
-with col_btn2:
-    if st.button("İNDİR", use_container_width=True, type="primary"): hesapla(False)
+    gun_para_sonuc = gun_para_hesapla(gun_para, pay, payda, artis)
+    islem_sayaci += 1
+    lbl_sayac.config(text=f"İşlem: {islem_sayaci}")
 
-if st.button("SIFIRLA"):
-    st.session_state.yil = 0
-    st.session_state.ay = 0
-    st.session_state.gun = 0
-    st.session_state.para = 0
-    st.rerun()
+    girilen_list = []
+    if yil: girilen_list.append(f"{yil} yıl")
+    if ay: girilen_list.append(f"{ay} ay")
+    if gun: girilen_list.append(f"{gun} gün")
+    girilen_str = " ".join(girilen_list) if girilen_list else "0 gün"
+
+    sonuc_list = []
+    if sonuc_yil: sonuc_list.append(f"{sonuc_yil} yıl")
+    if sonuc_ay:  sonuc_list.append(f"{sonuc_ay} ay")
+    if sonuc_gun: sonuc_list.append(f"{sonuc_gun} gün")
+    sonuc_str = " ".join(sonuc_list) if sonuc_list else "0 gün"
+
+    islem_text = "artırıldı" if artis else "indirildi"
+    mesaj = f"{girilen_str} {pay}/{payda} oranında {islem_text} → {sonuc_str} yaptı.\n---\n"
+
+    txt_sonuc.config(state="normal")
+    txt_sonuc.insert(tk.END, mesaj)
+    txt_sonuc.see(tk.END)
+    txt_sonuc.config(state="disabled")
+
+    e_yil.delete(0, tk.END); e_yil.insert(0, sonuc_yil)
+    e_ay.delete(0, tk.END);  e_ay.insert(0, sonuc_ay)
+    e_gun.delete(0, tk.END); e_gun.insert(0, sonuc_gun)
+    e_gun_para.delete(0, tk.END); e_gun_para.insert(0, int(gun_para_sonuc))
+
+# ================= GUI =================
+
+root = tk.Tk()
+
+# 🔴 TEK EKLEME: İKON
+root.iconbitmap("icon.ico")
+
+root.title("CezaHesapMakinesi-Kenan ŞENLİK")
+root.geometry("360x640")
+root.resizable(False, False)
+
+def hakkinda():
+    messagebox.showinfo("Hakkında", "CezaHesapMakinesi 1.0\nHakim Kenan Şenlik")
+
+menu_bar = tk.Menu(root)
+yardim_menu = tk.Menu(menu_bar, tearoff=0)
+yardim_menu.add_command(label="Hakkında", command=hakkinda)
+menu_bar.add_cascade(label="Yardım", menu=yardim_menu)
+root.config(menu=menu_bar)
+
+islem_sayaci = 0
+
+def alan(label, y):
+    tk.Label(root, text=label).place(x=20, y=y)
+    e = tk.Entry(root)
+    e.place(x=140, y=y, width=180, height=28)
+    e.insert(0, "0")
+    return e
+
+e_yil = alan("Yıl", 30)
+e_ay = alan("Ay", 70)
+e_gun = alan("Gün", 110)
+e_gun_para = alan("Gün Para", 150)
+
+tk.Label(root, text="Oran").place(x=20, y=190)
+e_oran = tk.Entry(root)
+e_oran.place(x=140, y=190, width=180, height=28)
+e_oran.insert(0, "1/6")
+
+btn_artir = tk.Button(root, text="ARTIR", height=2, bg="#ef5350", command=lambda: hesapla(True))
+btn_indir = tk.Button(root, text="İNDİR", height=2, bg="#66bb6a", command=lambda: hesapla(False))
+
+btn_artir.place(x=20, y=240, width=140)
+btn_indir.place(x=180, y=240, width=140)
+
+frame = tk.Frame(root)
+frame.place(x=20, y=310, width=320, height=260)
+scroll_y = tk.Scrollbar(frame, orient="vertical")
+scroll_y.pack(side=tk.RIGHT, fill=tk.Y)
+txt_sonuc = tk.Text(frame, state="disabled", wrap="none", yscrollcommand=scroll_y.set)
+txt_sonuc.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+scroll_y.config(command=txt_sonuc.yview)
+
+lbl_sayac = tk.Label(root, text="İşlem: 0", relief="solid", padx=5)
+lbl_sayac.place(x=300, y=5)
+
+root.mainloop()
