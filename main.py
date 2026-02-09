@@ -1,7 +1,24 @@
 import streamlit as st
 from math import floor, ceil
+from PIL import Image
+import os
 
-# ================= YARDIMCI FONKSİYONLAR =================
+# ================= 1. ÖZEL İKON VE SAYFA AYARI =================
+# Yüklediğin dosyanın adı icon.ico olduğu için burayı güncelledik
+icon_yolu = "icon.ico" 
+
+if os.path.exists(icon_yolu):
+    try:
+        # .ico dosyasını açıp sayfa ikonu olarak tanımlıyoruz
+        img = Image.open(icon_yolu)
+        st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon=img)
+    except:
+        # Eğer resim dosyasında bir sorun çıkarsa uygulama çökmesin diye emojiye döner
+        st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
+else:
+    st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
+
+# ================= 2. HESAPLAMA FONKSİYONLARI =================
 def kesir_oku(s):
     s = s.strip()
     if "/" not in s: return None
@@ -16,8 +33,7 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= STREAMLIT ARAYÜZÜ =================
-st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
+# ================= 3. KULLANICI ARAYÜZÜ =================
 st.title("⚖️ Ceza Hesap Makinesi")
 st.subheader("Hakim Kenan Şenlik")
 
@@ -36,11 +52,11 @@ artis_durumu = None
 if c1.button("🛑 ARTIR", use_container_width=True): artis_durumu = True
 if c2.button("✅ İNDİR", use_container_width=True): artis_durumu = False
 
-# ================= HESAPLAMA MANTIĞI =================
+# ================= 4. HESAPLAMA MANTIĞI =================
 if artis_durumu is not None:
     kesir = kesir_oku(oran_str)
     if not kesir:
-        st.error("Oran geçersiz!")
+        st.error("Oran geçersiz! Lütfen 1/6 gibi bir format girin.")
     else:
         pay, payda = kesir
         sonuc_yil, sonuc_ay, sonuc_gun = yil, ay, gun
