@@ -11,11 +11,27 @@ if os.path.exists(icon_yolu):
         img = Image.open(icon_yolu)
         st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon=img, layout="centered")
     except:
-        st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="")
+        st.set_page_config(page_title="Ceza Hesap Makinesi", layout="centered")
 else:
-    st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="")
+    st.set_page_config(page_title="Ceza Hesap Makinesi", layout="centered")
 
-# ================= 2. FONKSİYONLAR (Orijinal Mantığınız) =================
+# ================= 2. BUTON RENKLERİ (CSS) =================
+st.markdown("""
+    <style>
+    /* Artır Butonu - Kırmızı */
+    div.stButton > button:first-child {
+        background-color: #d32f2f;
+        color: white;
+        border: None;
+    }
+    /* İndir Butonu - Yeşil */
+    div.stButton > button:nth-child(1) {
+        /* Bu kısım aşağıda buton bazlı özelleştirilecek */
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ================= 3. FONKSİYONLAR =================
 def kesir_oku(s):
     s = s.strip()
     if "/" not in s: return None
@@ -30,15 +46,14 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= 3. HAFIZA SİSTEMİ (Tkinter'deki gibi çalışma) =================
-# Bu kısım, kutucuklardaki rakamların güncellenmesini sağlar
+# ================= 4. HAFIZA SİSTEMİ =================
 if 'yil' not in st.session_state: st.session_state.yil = 0
 if 'ay' not in st.session_state: st.session_state.ay = 0
 if 'gun' not in st.session_state: st.session_state.gun = 0
 if 'para' not in st.session_state: st.session_state.para = 0
 if 'gecmis' not in st.session_state: st.session_state.gecmis = []
 
-# ================= 4. ARAYÜZ (LOGO VE BAŞLIK) =================
+# ================= 5. ARAYÜZ (BAŞLIK) =================
 if os.path.exists(icon_yolu):
     col_logo, col_text = st.columns([1, 4], vertical_alignment="center") 
     with col_logo:
@@ -47,12 +62,12 @@ if os.path.exists(icon_yolu):
         st.markdown("<h1 style='margin:0;'>Ceza Hesap Makinesi</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='margin:0; color: gray;'>Hakim Kenan Şenlik</h3>", unsafe_allow_html=True)
 else:
-    st.title("⚖️ Ceza Hesap Makinesi")
-    st.subheader("Hakim Kenan Şenlik")
+    st.markdown("<h1>Ceza Hesap Makinesi</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: gray;'>Hakim Kenan Şenlik</h3>", unsafe_allow_html=True)
 
 st.write("---")
 
-# ================= 5. GİRİŞ ALANLARI =================
+# ================= 6. GİRİŞ ALANLARI =================
 c_yil, c_ay, c_gun, c_para = st.columns(4)
 
 with c_yil:
@@ -66,7 +81,7 @@ with c_para:
 
 oran_str = st.text_input("Oran (Örn: 1/6)", value="1/6")
 
-# ================= 6. HESAPLAMA BUTONLARI =================
+# ================= 7. BUTONLAR VE HESAPLAMA =================
 b1, b2, b3 = st.columns(3)
 
 def hesapla_ve_guncelle(artis_mi):
@@ -76,7 +91,6 @@ def hesapla_ve_guncelle(artis_mi):
         return
     
     pay, payda = kesir
-    # Sizin orijinal matematiksel işlemleriniz
     s_yil, s_ay, s_gun = yil, ay, gun
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
@@ -100,7 +114,6 @@ def hesapla_ve_guncelle(artis_mi):
     
     s_gun += gun_degisim if artis_mi else -gun_degisim
     
-    # Dengeleme
     if s_gun < 0:
         ay_eksi = (abs(s_gun) + 29) // 30
         s_ay -= ay_eksi
@@ -110,24 +123,23 @@ def hesapla_ve_guncelle(artis_mi):
         s_yil -= yil_eksi
         s_ay += yil_eksi * 12
 
-    # Yeni değerleri hafızaya al (Böylece kutucuklar güncellenir)
     st.session_state.yil = max(0, int(s_yil))
     st.session_state.ay = max(0, int(s_ay))
     st.session_state.gun = max(0, int(s_gun))
     st.session_state.para = int(gun_para_hesapla(para, pay, payda, artis_mi))
     
-    # Geçmişe ekle (Tkinter'deki alttaki liste gibi)
     islem = "Artırım" if artis_mi else "İndirim"
     st.session_state.gecmis.append(f"✅ {pay}/{payda} {islem} → {st.session_state.yil}y {st.session_state.ay}ay {st.session_state.gun}g")
     st.rerun()
 
-if b1.button("🛑 ARTIR", use_container_width=True):
+# Renkli butonlar (Streamlit'in 'primary' özelliği indir için yeşil, özel CSS artır için kırmızı)
+if b1.button("ARTIR", use_container_width=True):
     hesapla_ve_guncelle(True)
 
-if b2.button("✅ İNDİR", use_container_width=True):
+if b2.button("İNDİR", use_container_width=True, type="primary"):
     hesapla_ve_guncelle(False)
 
-if b3.button("🔄 SIFIRLA", use_container_width=True):
+if b3.button("SIFIRLA", use_container_width=True):
     st.session_state.yil = 0
     st.session_state.ay = 0
     st.session_state.gun = 0
@@ -135,9 +147,8 @@ if b3.button("🔄 SIFIRLA", use_container_width=True):
     st.session_state.gecmis = []
     st.rerun()
 
-# ================= 7. İŞLEM GEÇMİŞİ (Tkinter'deki Liste Alanı) =================
+# ================= 8. İŞLEM GEÇMİŞİ =================
 if st.session_state.gecmis:
     st.info("📋 İşlem Geçmişi")
     for satir in reversed(st.session_state.gecmis):
         st.write(satir)
-
