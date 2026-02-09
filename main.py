@@ -1,106 +1,120 @@
 import streamlit as st
 from math import floor, ceil
 from PIL import Image
+import os
 
-# ================= HESAPLAMA =================
+# Sayfa ayarı (Sadece sizin logonuz için)
+icon_yolu = "icon.ico"
+if os.path.exists(icon_yolu):
+    img = Image.open(icon_yolu)
+    st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon=img)
+else:
+    st.set_page_config(page_title="Ceza Hesap Makinesi")
 
+# ================= SİZİN YARDIMCI FONKSİYONLARINIZ (BİREBİR) =================
 def kesir_oku(s):
+    s = s.strip()
+    if "/" not in s: return None
     try:
-        a, b = s.split("/")
-        return int(a), int(b)
-    except:
-        return None
+        pay, payda = s.split("/")
+        pay = int(pay)
+        payda = int(payda)
+        if pay > 0 and payda > 0: return pay, payda
+    except: return None
+    return None
 
 def gun_para_hesapla(gun, pay, payda, artis):
     ham = gun * pay / payda
     degisim = floor(ham) if artis else ceil(ham)
-    return max(0, gun + degisim if artis else gun - degisim)
+    sonuc = gun + degisim if artis else gun - degisim
+    return max(0, sonuc)
 
-def hesapla(yil, ay, gun, gun_para, oran, artis):
-    k = kesir_oku(oran)
-    if not k:
-        return None, "Oran hatalı (örn: 1/6)"
+# ================= HAFIZA (ZİNCİRLEME İŞLEM İÇİN) =================
+if 'yil' not in st.session_state: st.session_state.yil = 0
+if 'ay' not in st.session_state: st.session_state.ay = 0
+if 'gun' not in st.session_state: st.session_state.gun = 0
+if 'para' not in st.session_state: st.session_state.para = 0
 
-    pay, payda = k
+# ================= ARAYÜZ =================
+if os.path.exists(icon_yolu):
+    col_logo, col_text = st.columns([1, 4], vertical_alignment="center")
+    with col_logo: st.image(icon_yolu, width=100)
+    with col_text:
+        st.markdown(f"<h1>Ceza Hesap Makinesi</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h3>Hakim Kenan Şenlik</h3>", unsafe_allow_html=True)
 
-    sonuc_yil = yil + (yil * pay // payda if artis else -(yil * pay // payda))
-    sonuc_ay = ay + (ay * pay // payda if artis else -(ay * pay // payda))
-    sonuc_gun = gun + (gun * pay // payda if artis else -(gun * pay // payda))
+# GİRİŞ ALANLARI (Sizin kodunuzdaki Entry'ler)
+e_yil = st.number_input("Yıl", value=int(st.session_state.yil), step=1)
+e_ay = st.number_input("Ay", value=int(st.session_state.ay), step=1)
+e_gun = st.number_input("Gün", value=int(st.session_state.gun), step=1)
+e_gun_para = st.number_input("Gün Para", value=int(st.session_state.para), step=1)
+e_oran = st.text_input("Oran", value="1/6")
 
-    gun_para_sonuc = gun_para_hesapla(gun_para, pay, payda, artis)
+# ================= HESAPLA FONKSİYONU (SİZİN MANTIĞINIZ) =================
+def hesapla(artis):
+    kesir = kesir_oku(e_oran)
+    if not kesir:
+        st.error("Oran geçersiz")
+        return
 
-    return (
-        f"{yil} yıl {ay} ay {gun} gün → "
-        f"{max(0,sonuc_yil)} yıl {max(0,sonuc_ay)} ay {max(0,sonuc_gun)} gün",
-        None
-    )
+    pay, payda = kesir
+    yil, ay, gun = e_yil, e_ay, e_gun
+    
+    sonuc_yil, sonuc_ay, sonuc_gun = yil, ay, gun
 
-# ================= SAYFA AYARI =================
+    # SİZİN ORİJİNAL MANTIĞINIZ (BİREBİR KOPYALANDI)
+    tam_yil = (yil // payda) * payda
+    kalan_yil = yil - tam_yil
+    yil_degisim = (tam_yil // payda) * pay
+    sonuc_yil += yil_degisim if artis else -yil_degisim
 
-st.set_page_config(
-    page_title="Ceza Hesaplama",
-    page_icon="icon.png",
-    layout="centered"
-)
+    ay_yildan_ham = kalan_yil * 12 * pay / payda
+    ay_yildan = floor(round(ay_yildan_ham, 6))
+    sonuc_ay += ay_yildan if artis else -ay_yildan
+    ay_yildan_artik = ay_yildan_ham - ay_yildan
 
-# ================= GİRİŞ SAYACI =================
+    ay_ham = ay * pay / payda
+    ay_degisim = floor(round(ay_ham, 6))
+    sonuc_ay += ay_degisim if artis else -ay_degisim
+    ay_artik = ay_ham - ay_degisim + ay_yildan_artik
 
-if "ziyaret" not in st.session_state:
-    st.session_state.ziyaret = 0
+    gun_ham = gun * pay / payda
+    gun_artik = ay_artik * 30
 
-st.session_state.ziyaret += 1
+    if artis:
+        gun_degisim = floor(round(gun_ham, 6)) + floor(round(gun_artik, 6))
+    else:
+        gun_degisim = ceil(round(gun_ham, 6)) + ceil(round(gun_artik, 6))
 
-# ================= BAŞLIK =================
+    sonuc_gun += gun_degisim if artis else -gun_degisim
 
-icon = Image.open("icon.png")
-st.image(icon, width=90)
-st.caption("Kenan Şenlik")
+    if sonuc_gun < 0:
+        ay_eksi = (abs(sonuc_gun) + 29) // 30
+        sonuc_ay -= ay_eksi
+        sonuc_gun += ay_eksi * 30
 
-st.divider()
+    if sonuc_ay < 0:
+        yil_eksi = (abs(sonuc_ay) + 11) // 12
+        sonuc_yil -= yil_eksi
+        sonuc_ay += yil_eksi * 12
 
-# ================= FORM =================
+    # Kutucukları güncellemek için hafızaya yaz
+    st.session_state.yil = max(0, int(sonuc_yil))
+    st.session_state.ay = max(0, int(sonuc_ay))
+    st.session_state.gun = max(0, int(sonuc_gun))
+    st.session_state.para = int(gun_para_hesapla(e_gun_para, pay, payda, artis))
+    st.rerun()
 
-yil = st.number_input("Yıl", min_value=0, step=1)
-ay = st.number_input("Ay", min_value=0, step=1)
-gun = st.number_input("Gün", min_value=0, step=1)
-gun_para = st.number_input("Gün Para", min_value=0, step=1)
-oran = st.text_input("Oran", "1/6")
+# BUTONLAR
+col_btn1, col_btn2 = st.columns(2)
+with col_btn1:
+    if st.button("ARTIR", use_container_width=True, type="secondary"): hesapla(True)
+with col_btn2:
+    if st.button("İNDİR", use_container_width=True, type="primary"): hesapla(False)
 
-if "log" not in st.session_state:
-    st.session_state.log = []
-
-c1, c2 = st.columns(2)
-
-with c1:
-    if st.button("ARTIR", use_container_width=True):
-        msg, hata = hesapla(yil, ay, gun, gun_para, oran, True)
-        if hata:
-            st.error(hata)
-        else:
-            st.session_state.log.append(msg)
-
-with c2:
-    if st.button("İNDİR", use_container_width=True):
-        msg, hata = hesapla(yil, ay, gun, gun_para, oran, False)
-        if hata:
-            st.error(hata)
-        else:
-            st.session_state.log.append(msg)
-
-st.divider()
-
-for m in reversed(st.session_state.log):
-    st.write(m)
-
-# ================= SAYAÇ (EN ALT) =================
-
-st.divider()
-st.markdown(
-    f"""
-    <div style="text-align:center; font-size:18px; opacity:0.8;">
-    🔢 Bu oturumda görüntülenme: <b>{st.session_state.ziyaret}</b>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
+if st.button("SIFIRLA"):
+    st.session_state.yil = 0
+    st.session_state.ay = 0
+    st.session_state.gun = 0
+    st.session_state.para = 0
+    st.rerun()
