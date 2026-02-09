@@ -90,7 +90,7 @@ st.set_page_config(
 )
 
 st.title("⚖️ Ceza Hesap Makinesi")
-st.caption("Hakim Kenan Şenlik")
+st.caption(" Kenan Şenlik")
 
 with st.sidebar:
     st.subheader("ℹ️ Hakkında")
@@ -135,3 +135,4 @@ if st.button("🔻 İNDİR"):
 
 st.markdown("---")
 st.info(f"Toplam İşlem: {st.session_state.islem_sayaci}")
+
