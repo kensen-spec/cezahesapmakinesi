@@ -1,8 +1,50 @@
 import streamlit as st
 from math import floor, ceil
 
-# ================= YARDIMCI =================
+# -------------------------------------------------
+# SAYFA AYARLARI
+# -------------------------------------------------
+st.set_page_config(
+    page_title="Ceza Hesap Makinesi",
+    page_icon="icon.png",
+    layout="centered"
+)
 
+# -------------------------------------------------
+# CSS (BUTON RENKLERİ + GENEL GÖRÜNÜM)
+# -------------------------------------------------
+st.markdown("""
+<style>
+div.stButton > button {
+    width: 100%;
+    height: 48px;
+    font-size: 17px;
+    font-weight: bold;
+    border-radius: 6px;
+}
+button[kind="primary"] {
+    background-color: #ef5350;
+}
+button[kind="secondary"] {
+    background-color: #66bb6a;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------
+# BAŞLIK + ICON
+# -------------------------------------------------
+st.markdown("""
+<div style="display:flex; align-items:center; gap:12px;">
+    <img src="icon.png" width="48">
+    <h2 style="margin:0;">Ceza Hesap Makinesi</h2>
+</div>
+<p style="margin-top:-6px; color:gray;">Kenan Şenlik</p>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------
+# YARDIMCI FONKSİYONLAR (AYNEN KORUNDU)
+# -------------------------------------------------
 def kesir_oku(s):
     s = s.strip()
     if "/" not in s:
@@ -23,13 +65,28 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= HESAPLAMA =================
+# -------------------------------------------------
+# GİRİŞ ALANLARI
+# -------------------------------------------------
+col1, col2 = st.columns(2)
 
-def hesapla(yil, ay, gun, gun_para, oran, artis):
-    kesir = kesir_oku(oran)
+with col1:
+    yil = st.number_input("Yıl", min_value=0, step=1)
+    ay = st.number_input("Ay", min_value=0, step=1)
+    gun = st.number_input("Gün", min_value=0, step=1)
+
+with col2:
+    gun_para = st.number_input("Gün Para", min_value=0, step=1)
+    oran_str = st.text_input("Oran (örn: 1/6)", value="1/6")
+
+# -------------------------------------------------
+# HESAPLAMA
+# -------------------------------------------------
+def hesapla(artis):
+    kesir = kesir_oku(oran_str)
     if not kesir:
         st.error("Oran geçersiz (örn: 1/6)")
-        return None
+        return
 
     pay, payda = kesir
 
@@ -37,7 +94,7 @@ def hesapla(yil, ay, gun, gun_para, oran, artis):
     sonuc_ay = ay
     sonuc_gun = gun
 
-    # --- ORİJİNAL MANTIK (AYNEN KORUNDU) ---
+    # --- ORİJİNAL MANTIK (DOKUNULMADI) ---
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
     yil_degisim = (tam_yil // payda) * pay
@@ -79,60 +136,27 @@ def hesapla(yil, ay, gun, gun_para, oran, artis):
 
     gun_para_sonuc = gun_para_hesapla(gun_para, pay, payda, artis)
 
-    return sonuc_yil, sonuc_ay, sonuc_gun, gun_para_sonuc, pay, payda
+    st.success(
+        f"{yil} yıl {ay} ay {gun} gün → "
+        f"{sonuc_yil} yıl {sonuc_ay} ay {sonuc_gun} gün\n\n"
+        f"Gün Para Sonucu: {gun_para_sonuc}"
+    )
 
-# ================= STREAMLIT UI =================
+# -------------------------------------------------
+# BUTONLAR (YAN YANA – EXE GİBİ)
+# -------------------------------------------------
+b1, b2 = st.columns(2)
 
-st.set_page_config(
-    page_title="Ceza Hesap Makinesi",
-    page_icon="⚖️",
-    layout="centered"
-)
+with b1:
+    if st.button("▲ ARTIR", type="primary"):
+        hesapla(True)
 
-st.title("⚖️ Ceza Hesap Makinesi")
-st.caption(" Kenan Şenlik")
+with b2:
+    if st.button("▼ İNDİR", type="secondary"):
+        hesapla(False)
 
+# -------------------------------------------------
+# HAKKINDA
+# -------------------------------------------------
 with st.sidebar:
-    st.subheader("ℹ️ Hakkında")
-    st.write("CezaHesapMakinesi 1.0")
-    st.write("Hakim Kenan Şenlik")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    yil = st.number_input("Yıl", min_value=0, value=0)
-    ay = st.number_input("Ay", min_value=0, value=0)
-    gun = st.number_input("Gün", min_value=0, value=0)
-
-with col2:
-    gun_para = st.number_input("Gün Para", min_value=0, value=0)
-    oran = st.text_input("Oran (örn: 1/6)", value="1/6")
-
-if "islem_sayaci" not in st.session_state:
-    st.session_state.islem_sayaci = 0
-
-if st.button("🔺 ARTIR"):
-    sonuc = hesapla(yil, ay, gun, gun_para, oran, True)
-    if sonuc:
-        st.session_state.islem_sayaci += 1
-        sy, sa, sg, gp, pay, payda = sonuc
-        st.success(
-            f"{yil} yıl {ay} ay {gun} gün → {pay}/{payda} oranında **artırıldı**\n\n"
-            f"➡️ **{sy} yıl {sa} ay {sg} gün**"
-        )
-        st.write(f"💰 Gün Para Sonucu: **{gp}**")
-
-if st.button("🔻 İNDİR"):
-    sonuc = hesapla(yil, ay, gun, gun_para, oran, False)
-    if sonuc:
-        st.session_state.islem_sayaci += 1
-        sy, sa, sg, gp, pay, payda = sonuc
-        st.success(
-            f"{yil} yıl {ay} ay {gun} gün → {pay}/{payda} oranında **indirildi**\n\n"
-            f"➡️ **{sy} yıl {sa} ay {sg} gün**"
-        )
-        st.write(f"💰 Gün Para Sonucu: **{gp}**")
-
-st.markdown("---")
-st.info(f"Toplam İşlem: {st.session_state.islem_sayaci}")
-
+    st.info("CezaHesapMakinesi 1.0\n\nHakim Kenan Şenlik")
