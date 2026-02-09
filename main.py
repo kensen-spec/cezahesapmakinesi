@@ -1,5 +1,7 @@
 import streamlit as st
 from math import floor, ceil
+from PIL import Image
+import os
 
 # ================= YARDIMCI =================
 
@@ -23,7 +25,7 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= HESAPLAMA (AYNI MANTIK) =================
+# ================= HESAPLAMA (AYNEN) =================
 
 def hesapla(yil, ay, gun, gun_para, oran, artis):
     kesir = kesir_oku(oran)
@@ -36,7 +38,6 @@ def hesapla(yil, ay, gun, gun_para, oran, artis):
     sonuc_ay = ay
     sonuc_gun = gun
 
-    # --- ORİJİNAL MANTIK (AYNEN) ---
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
     yil_degisim = (tam_yil // payda) * pay
@@ -93,15 +94,9 @@ def hesapla(yil, ay, gun, gun_para, oran, artis):
     islem_text = "artırıldı" if artis else "indirildi"
     mesaj = f"{girilen_str} {pay}/{payda} oranında {islem_text} → {sonuc_str} yaptı."
 
-    return {
-        "yil": sonuc_yil,
-        "ay": sonuc_ay,
-        "gun": sonuc_gun,
-        "gun_para": int(gun_para_sonuc),
-        "mesaj": mesaj
-    }, None
+    return mesaj, None
 
-# ================= STREAMLIT ARAYÜZ =================
+# ================= SAYFA AYAR =================
 
 st.set_page_config(
     page_title="Ceza Hesap Makinesi",
@@ -109,11 +104,27 @@ st.set_page_config(
     layout="centered"
 )
 
-st.markdown("## ⚖️ Ceza Hesap Makinesi")
+# ================= GİRİŞ SAYACI =================
+
+counter_file = "counter.txt"
+if not os.path.exists(counter_file):
+    with open(counter_file, "w") as f:
+        f.write("0")
+
+with open(counter_file, "r+") as f:
+    count = int(f.read().strip() or 0)
+    count += 1
+    f.seek(0)
+    f.write(str(count))
+    f.truncate()
+
+# ================= BAŞLIK (ICON) =================
+
+icon = Image.open("icon.png")
+st.image(icon, width=96)
 st.caption("Kenan Şenlik")
 
-if "log" not in st.session_state:
-    st.session_state.log = []
+# ================= FORM =================
 
 yil = st.number_input("Yıl", min_value=0, step=1)
 ay = st.number_input("Ay", min_value=0, step=1)
@@ -121,25 +132,31 @@ gun = st.number_input("Gün", min_value=0, step=1)
 gun_para = st.number_input("Gün Para", min_value=0, step=1)
 oran = st.text_input("Oran", value="1/6")
 
+if "log" not in st.session_state:
+    st.session_state.log = []
+
 c1, c2 = st.columns(2)
 
 with c1:
     if st.button("ARTIR", use_container_width=True):
-        sonuc, hata = hesapla(yil, ay, gun, gun_para, oran, True)
+        msg, hata = hesapla(yil, ay, gun, gun_para, oran, True)
         if hata:
             st.error(hata)
         else:
-            st.session_state.log.append(sonuc["mesaj"])
+            st.session_state.log.append(msg)
 
 with c2:
     if st.button("İNDİR", use_container_width=True):
-        sonuc, hata = hesapla(yil, ay, gun, gun_para, oran, False)
+        msg, hata = hesapla(yil, ay, gun, gun_para, oran, False)
         if hata:
             st.error(hata)
         else:
-            st.session_state.log.append(sonuc["mesaj"])
+            st.session_state.log.append(msg)
 
 st.divider()
 
-for m in st.session_state.log[::-1]:
+for m in reversed(st.session_state.log):
     st.write(m)
+
+st.divider()
+st.caption(f"🔢 Toplam giriş sayısı: {count}")
