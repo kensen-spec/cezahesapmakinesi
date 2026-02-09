@@ -11,9 +11,9 @@ if os.path.exists(icon_yolu):
         img = Image.open(icon_yolu)
         st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon=img, layout="centered")
     except:
-        st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
+        st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="")
 else:
-    st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
+    st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="")
 
 # ================= 2. FONKSİYONLAR (Orijinal Mantığınız) =================
 def kesir_oku(s):
@@ -140,3 +140,4 @@ if st.session_state.gecmis:
     st.info("📋 İşlem Geçmişi")
     for satir in reversed(st.session_state.gecmis):
         st.write(satir)
+
