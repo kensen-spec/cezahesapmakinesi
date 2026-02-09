@@ -87,10 +87,10 @@ if os.path.exists(icon_yolu):
         st.image(icon_yolu, width=90)
     with col_text:
         st.markdown("<h1 style='margin:0;'>Ceza Hesap Makinesi</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='margin:0; color: gray;'>Hakim Kenan Şenlik</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin:0; color: gray;'> Kenan Şenlik</h3>", unsafe_allow_html=True)
 else:
     st.markdown("<h1>Ceza Hesap Makinesi</h1>", unsafe_allow_html=True)
-    st.caption("Hakim Kenan Şenlik")
+    st.caption(" Kenan Şenlik")
 
 st.write("---")
 
@@ -185,3 +185,4 @@ if st.button("SIFIRLA"):
     st.session_state.log = []
     st.session_state.yil = 0; st.session_state.ay = 0; st.session_state.gun = 0; st.session_state.para = 0
     st.rerun()
+
