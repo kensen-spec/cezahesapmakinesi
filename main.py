@@ -1,6 +1,7 @@
 import streamlit as st
 from math import floor, ceil
 from PIL import Image
+import os # Sayacı kaydetmek için eklendi
 
 # ================= HESAPLAMA =================
 
@@ -43,12 +44,28 @@ st.set_page_config(
     layout="centered"
 )
 
-# ================= GİRİŞ SAYACI =================
+# ================= GİRİŞ SAYACI (DÜZELTİLDİ) =================
 
-if "ziyaret" not in st.session_state:
-    st.session_state.ziyaret = 0
+def toplam_ziyaret_yonetimi():
+    dosya = "ziyaret_sayisi.txt"
+    # Dosya yoksa oluştur
+    if not os.path.exists(dosya):
+        with open(dosya, "w") as f: f.write("0")
+    
+    # Mevcut sayıyı oku
+    with open(dosya, "r") as f:
+        toplam = int(f.read())
+    
+    # Eğer bu sekme yeni açıldıysa (ilk girişse) artır
+    if "ziyaret_edildi" not in st.session_state:
+        toplam += 1
+        with open(dosya, "w") as f:
+            f.write(str(toplam))
+        st.session_state.ziyaret_edildi = True
+    
+    return toplam
 
-st.session_state.ziyaret += 1
+toplam_ziyaret = toplam_ziyaret_yonetimi()
 
 # ================= BAŞLIK =================
 
@@ -98,9 +115,8 @@ st.divider()
 st.markdown(
     f"""
     <div style="text-align:center; font-size:18px; opacity:0.8;">
-    🔢 Bu oturumda görüntülenme: <b>{st.session_state.ziyaret}</b>
+    🔢 Toplam Ziyaret Sayısı: <b>{toplam_ziyaret}</b>
     </div>
     """,
     unsafe_allow_html=True
 )
-
