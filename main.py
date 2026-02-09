@@ -1,7 +1,7 @@
 import streamlit as st
 from math import floor, ceil
 
-# ================= YARDIMCI (AYNI) =================
+# ================= YARDIMCI =================
 
 def kesir_oku(s):
     s = s.strip()
@@ -23,20 +23,12 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= STREAMLIT STATE =================
+# ================= HESAPLAMA (AYNI MANTIK) =================
 
-if "islem_sayaci" not in st.session_state:
-    st.session_state.islem_sayaci = 0
-
-if "sonuclar" not in st.session_state:
-    st.session_state.sonuclar = ""
-
-# ================= HESAPLAMA (AYNI) =================
-
-def hesapla(artis, yil, ay, gun, gun_para, oran):
+def hesapla(yil, ay, gun, gun_para, oran, artis):
     kesir = kesir_oku(oran)
     if not kesir:
-        return "❌ Oran geçersiz (örn: 1/6)"
+        return None, "Oran geçersiz (örn: 1/6)"
 
     pay, payda = kesir
 
@@ -44,6 +36,7 @@ def hesapla(artis, yil, ay, gun, gun_para, oran):
     sonuc_ay = ay
     sonuc_gun = gun
 
+    # --- ORİJİNAL MANTIK (AYNEN) ---
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
     yil_degisim = (tam_yil // payda) * pay
@@ -85,8 +78,6 @@ def hesapla(artis, yil, ay, gun, gun_para, oran):
 
     gun_para_sonuc = gun_para_hesapla(gun_para, pay, payda, artis)
 
-    st.session_state.islem_sayaci += 1
-
     girilen = []
     if yil: girilen.append(f"{yil} yıl")
     if ay: girilen.append(f"{ay} ay")
@@ -100,16 +91,20 @@ def hesapla(artis, yil, ay, gun, gun_para, oran):
     sonuc_str = " ".join(sonuc) if sonuc else "0 gün"
 
     islem_text = "artırıldı" if artis else "indirildi"
-    mesaj = f"{girilen_str} {pay}/{payda} oranında {islem_text} → {sonuc_str} yaptı.\n---\n"
+    mesaj = f"{girilen_str} {pay}/{payda} oranında {islem_text} → {sonuc_str} yaptı."
 
-    st.session_state.sonuclar += mesaj
+    return {
+        "yil": sonuc_yil,
+        "ay": sonuc_ay,
+        "gun": sonuc_gun,
+        "gun_para": int(gun_para_sonuc),
+        "mesaj": mesaj
+    }, None
 
-    return sonuc_yil, sonuc_ay, sonuc_gun, gun_para_sonuc
-
-# ================= UI =================
+# ================= STREAMLIT ARAYÜZ =================
 
 st.set_page_config(
-    page_title="CezaHesapMakinesi",
+    page_title="Ceza Hesap Makinesi",
     page_icon="icon.png",
     layout="centered"
 )
@@ -117,28 +112,34 @@ st.set_page_config(
 st.markdown("## ⚖️ Ceza Hesap Makinesi")
 st.caption("Kenan Şenlik")
 
-yil = st.number_input("Yıl", min_value=0, value=0)
-ay = st.number_input("Ay", min_value=0, value=0)
-gun = st.number_input("Gün", min_value=0, value=0)
-gun_para = st.number_input("Gün Para", min_value=0, value=0)
+if "log" not in st.session_state:
+    st.session_state.log = []
+
+yil = st.number_input("Yıl", min_value=0, step=1)
+ay = st.number_input("Ay", min_value=0, step=1)
+gun = st.number_input("Gün", min_value=0, step=1)
+gun_para = st.number_input("Gün Para", min_value=0, step=1)
 oran = st.text_input("Oran", value="1/6")
 
-col1, col2 = st.columns(2)
+c1, c2 = st.columns(2)
 
-with col1:
-    if st.button("🔴 ARTIR"):
-        r = hesapla(True, yil, ay, gun, gun_para, oran)
-        if isinstance(r, tuple):
-            yil, ay, gun, gun_para = r
+with c1:
+    if st.button("ARTIR", use_container_width=True):
+        sonuc, hata = hesapla(yil, ay, gun, gun_para, oran, True)
+        if hata:
+            st.error(hata)
+        else:
+            st.session_state.log.append(sonuc["mesaj"])
 
-with col2:
-    if st.button("🟢 İNDİR"):
-        r = hesapla(False, yil, ay, gun, gun_para, oran)
-        if isinstance(r, tuple):
-            yil, ay, gun, gun_para = r
+with c2:
+    if st.button("İNDİR", use_container_width=True):
+        sonuc, hata = hesapla(yil, ay, gun, gun_para, oran, False)
+        if hata:
+            st.error(hata)
+        else:
+            st.session_state.log.append(sonuc["mesaj"])
 
-st.text_area(
-    f"Sonuçlar (İşlem: {st.session_state.islem_sayaci})",
-    st.session_state.sonuclar,
-    height=260
-)
+st.divider()
+
+for m in st.session_state.log[::-1]:
+    st.write(m)
