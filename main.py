@@ -3,22 +3,26 @@ from math import floor, ceil
 from PIL import Image
 import os
 
-# ================= YARDIMCI (AYNEN) =================
+# ================= 1. SAYFA VE İKON AYARLARI =================
+icon_yolu = "icon.ico" 
 
+if os.path.exists(icon_yolu):
+    try:
+        img = Image.open(icon_yolu)
+        st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon=img, layout="centered")
+    except:
+        st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
+else:
+    st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
+
+# ================= 2. FONKSİYONLAR (Orijinal Mantığınız) =================
 def kesir_oku(s):
     s = s.strip()
-    if "/" not in s:
-        return None
+    if "/" not in s: return None
     try:
         pay, payda = s.split("/")
-        pay = int(pay)
-        payda = int(payda)
-        if pay > 0 and payda > 0:
-            return pay, payda
-    except:
-        return None
-    return None
-
+        return int(pay), int(payda)
+    except: return None
 
 def gun_para_hesapla(gun, pay, payda, artis):
     ham = gun * pay / payda
@@ -26,103 +30,113 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= STREAMLIT SETUP =================
+# ================= 3. HAFIZA SİSTEMİ (Tkinter'deki gibi çalışma) =================
+# Bu kısım, kutucuklardaki rakamların güncellenmesini sağlar
+if 'yil' not in st.session_state: st.session_state.yil = 0
+if 'ay' not in st.session_state: st.session_state.ay = 0
+if 'gun' not in st.session_state: st.session_state.gun = 0
+if 'para' not in st.session_state: st.session_state.para = 0
+if 'gecmis' not in st.session_state: st.session_state.gecmis = []
 
-st.set_page_config(
-    page_title="CezaHesapMakinesi - Kenan Şenlik",
-    layout="centered"
-)
+# ================= 4. ARAYÜZ (LOGO VE BAŞLIK) =================
+if os.path.exists(icon_yolu):
+    col_logo, col_text = st.columns([1, 4], vertical_alignment="center") 
+    with col_logo:
+        st.image(icon_yolu, width=100)
+    with col_text:
+        st.markdown("<h1 style='margin:0;'>Ceza Hesap Makinesi</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin:0; color: gray;'>Hakim Kenan Şenlik</h3>", unsafe_allow_html=True)
+else:
+    st.title("⚖️ Ceza Hesap Makinesi")
+    st.subheader("Hakim Kenan Şenlik")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ICON_PATH = os.path.join(BASE_DIR, "icon.png")
+st.write("---")
 
-# ================= BAŞLIK =================
+# ================= 5. GİRİŞ ALANLARI =================
+c_yil, c_ay, c_gun, c_para = st.columns(4)
 
-col1, col2 = st.columns([1, 8])
-with col1:
-    if os.path.exists(ICON_PATH):
-        st.image(Image.open(ICON_PATH), width=50)
-with col2:
-    st.markdown("## ⚖️ Ceza Hesap Makinesi")
-    st.caption("Kenan Şenlik")
+with c_yil:
+    yil = st.number_input("Yıl", min_value=0, step=1, key="yil_input", value=st.session_state.yil)
+with c_ay:
+    ay = st.number_input("Ay", min_value=0, max_value=11, step=1, key="ay_input", value=st.session_state.ay)
+with c_gun:
+    gun = st.number_input("Gün", min_value=0, max_value=29, step=1, key="gun_input", value=st.session_state.gun)
+with c_para:
+    para = st.number_input("Para", min_value=0, step=1, key="para_input", value=st.session_state.para)
 
-st.divider()
+oran_str = st.text_input("Oran (Örn: 1/6)", value="1/6")
 
-# ================= GİRİŞLER =================
+# ================= 6. HESAPLAMA BUTONLARI =================
+b1, b2, b3 = st.columns(3)
 
-yil = st.number_input("Yıl", min_value=0, step=1, value=0)
-ay = st.number_input("Ay", min_value=0, step=1, value=0)
-gun = st.number_input("Gün", min_value=0, step=1, value=0)
-gun_para = st.number_input("Gün Para", min_value=0, step=1, value=0)
-oran_text = st.text_input("Oran (örn: 1/6)", value="1/6")
-
-kesir = kesir_oku(oran_text)
-if not kesir:
-    st.error("Oran geçersiz (örn: 1/6)")
-    st.stop()
-
-pay, payda = kesir
-
-# ================= HESAPLAMA (AYNEN) =================
-
-def hesapla(artis):
-    sonuc_yil = yil
-    sonuc_ay = ay
-    sonuc_gun = gun
-
+def hesapla_ve_guncelle(artis_mi):
+    kesir = kesir_oku(oran_str)
+    if not kesir:
+        st.error("Oran hatalı!")
+        return
+    
+    pay, payda = kesir
+    # Sizin orijinal matematiksel işlemleriniz
+    s_yil, s_ay, s_gun = yil, ay, gun
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
     yil_degisim = (tam_yil // payda) * pay
-    sonuc_yil += yil_degisim if artis else -yil_degisim
-
+    s_yil += yil_degisim if artis_mi else -yil_degisim
     ay_yildan_ham = kalan_yil * 12 * pay / payda
     ay_yildan = floor(round(ay_yildan_ham, 6))
-    sonuc_ay += ay_yildan if artis else -ay_yildan
+    s_ay += ay_yildan if artis_mi else -ay_yildan
     ay_yildan_artik = ay_yildan_ham - ay_yildan
-
     ay_ham = ay * pay / payda
     ay_degisim = floor(round(ay_ham, 6))
-    sonuc_ay += ay_degisim if artis else -ay_degisim
+    s_ay += ay_degisim if artis_mi else -ay_degisim
     ay_artik = ay_ham - ay_degisim + ay_yildan_artik
-
     gun_ham = gun * pay / payda
     gun_artik = ay_artik * 30
-
-    if artis:
+    
+    if artis_mi:
         gun_degisim = floor(round(gun_ham, 6)) + floor(round(gun_artik, 6))
     else:
         gun_degisim = ceil(round(gun_ham, 6)) + ceil(round(gun_artik, 6))
+    
+    s_gun += gun_degisim if artis_mi else -gun_degisim
+    
+    # Dengeleme
+    if s_gun < 0:
+        ay_eksi = (abs(s_gun) + 29) // 30
+        s_ay -= ay_eksi
+        s_gun += ay_eksi * 30
+    if s_ay < 0:
+        yil_eksi = (abs(s_ay) + 11) // 12
+        s_yil -= yil_eksi
+        s_ay += yil_eksi * 12
 
-    sonuc_gun += gun_degisim if artis else -gun_degisim
+    # Yeni değerleri hafızaya al (Böylece kutucuklar güncellenir)
+    st.session_state.yil = max(0, int(s_yil))
+    st.session_state.ay = max(0, int(s_ay))
+    st.session_state.gun = max(0, int(s_gun))
+    st.session_state.para = int(gun_para_hesapla(para, pay, payda, artis_mi))
+    
+    # Geçmişe ekle (Tkinter'deki alttaki liste gibi)
+    islem = "Artırım" if artis_mi else "İndirim"
+    st.session_state.gecmis.append(f"✅ {pay}/{payda} {islem} → {st.session_state.yil}y {st.session_state.ay}ay {st.session_state.gun}g")
+    st.rerun()
 
-    if sonuc_gun < 0:
-        ay_eksi = (abs(sonuc_gun) + 29) // 30
-        sonuc_ay -= ay_eksi
-        sonuc_gun += ay_eksi * 30
+if b1.button("🛑 ARTIR", use_container_width=True):
+    hesapla_ve_guncelle(True)
 
-    if sonuc_ay < 0:
-        yil_eksi = (abs(sonuc_ay) + 11) // 12
-        sonuc_yil -= yil_eksi
-        sonuc_ay += yil_eksi * 12
+if b2.button("✅ İNDİR", use_container_width=True):
+    hesapla_ve_guncelle(False)
 
-    sonuc_yil = max(0, int(sonuc_yil))
-    sonuc_ay = max(0, int(sonuc_ay))
-    sonuc_gun = max(0, int(sonuc_gun))
+if b3.button("🔄 SIFIRLA", use_container_width=True):
+    st.session_state.yil = 0
+    st.session_state.ay = 0
+    st.session_state.gun = 0
+    st.session_state.para = 0
+    st.session_state.gecmis = []
+    st.rerun()
 
-    gun_para_sonuc = gun_para_hesapla(gun_para, pay, payda, artis)
-
-    return sonuc_yil, sonuc_ay, sonuc_gun, gun_para_sonuc
-
-# ================= BUTONLAR =================
-
-c1, c2 = st.columns(2)
-
-with c1:
-    if st.button("ARTIR", use_container_width=True):
-        y, a, g, gp = hesapla(True)
-        st.success(f"Sonuç: {y} yıl {a} ay {g} gün | Gün Para: {gp}")
-
-with c2:
-    if st.button("İNDİR", use_container_width=True):
-        y, a, g, gp = hesapla(False)
-        st.success(f"Sonuç: {y} yıl {a} ay {g} gün | Gün Para: {gp}")
+# ================= 7. İŞLEM GEÇMİŞİ (Tkinter'deki Liste Alanı) =================
+if st.session_state.gecmis:
+    st.info("📋 İşlem Geçmişi")
+    for satir in reversed(st.session_state.gecmis):
+        st.write(satir)
