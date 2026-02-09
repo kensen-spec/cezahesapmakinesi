@@ -3,17 +3,15 @@ from math import floor, ceil
 from PIL import Image
 import os
 
-# ================= 1. ÖZEL İKON VE SAYFA AYARI =================
-# Yüklediğin dosyanın adı icon.ico olduğu için burayı güncelledik
+# ================= 1. SAYFA VE İKON AYARLARI =================
 icon_yolu = "icon.ico" 
 
+# Tarayıcı sekmesindeki ikon ayarı
 if os.path.exists(icon_yolu):
     try:
-        # .ico dosyasını açıp sayfa ikonu olarak tanımlıyoruz
         img = Image.open(icon_yolu)
         st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon=img)
     except:
-        # Eğer resim dosyasında bir sorun çıkarsa uygulama çökmesin diye emojiye döner
         st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
 else:
     st.set_page_config(page_title="Ceza Hesap Makinesi", page_icon="⚖️")
@@ -33,10 +31,20 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= 3. KULLANICI ARAYÜZÜ =================
-st.title("⚖️ Ceza Hesap Makinesi")
-st.subheader("Hakim Kenan Şenlik")
+# ================= 3. ARAYÜZ (SAYFA İÇİ LOGO VE BAŞLIK) =================
+if os.path.exists(icon_yolu):
+    # Logoyu ve başlığı yan yana getirir
+    col_logo, col_text = st.columns([1, 5]) 
+    with col_logo:
+        st.image(icon_yolu, width=70)
+    with col_text:
+        st.title("Ceza Hesap Makinesi")
+        st.subheader("Hakim Kenan Şenlik")
+else:
+    st.title("⚖️ Ceza Hesap Makinesi")
+    st.subheader("Hakim Kenan Şenlik")
 
+# ================= 4. GİRİŞ ALANLARI =================
 col1, col2 = st.columns(2)
 with col1:
     yil = st.number_input("Yıl", min_value=0, value=0)
@@ -52,7 +60,7 @@ artis_durumu = None
 if c1.button("🛑 ARTIR", use_container_width=True): artis_durumu = True
 if c2.button("✅ İNDİR", use_container_width=True): artis_durumu = False
 
-# ================= 4. HESAPLAMA MANTIĞI =================
+# ================= 5. HESAPLAMA MANTIĞI =================
 if artis_durumu is not None:
     kesir = kesir_oku(oran_str)
     if not kesir:
@@ -61,6 +69,7 @@ if artis_durumu is not None:
         pay, payda = kesir
         sonuc_yil, sonuc_ay, sonuc_gun = yil, ay, gun
         
+        # Matematiksel Dağıtım
         tam_yil = (yil // payda) * payda
         kalan_yil = yil - tam_yil
         yil_degisim = (tam_yil // payda) * pay
@@ -86,6 +95,7 @@ if artis_durumu is not None:
 
         sonuc_gun += gun_degisim if artis_durumu else -gun_degisim
 
+        # Yuvarlama ve Dengeleme
         if sonuc_gun < 0:
             ay_eksi = (abs(sonuc_gun) + 29) // 30
             sonuc_ay -= ay_eksi
