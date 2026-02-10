@@ -98,8 +98,8 @@ def hesapla(artis, yil, ay, gun, gun_para, oran, islem_sayaci):
 
 # ================= STREAMLIT ARAYÜZ =================
 
-st.title("CezaHesapMakinesi-Kenan ŞENLİK")
-st.sidebar.info("CezaHesapMakinesi 1.0\nHakim Kenan Şenlik")
+st.title("CezaHesapMakinesi")
+st.sidebar.info("CezaHesapMakinesi 1.0\n Kenan Şenlik")
 
 if 'islem_sayaci' not in st.session_state:
     st.session_state.islem_sayaci = 0
@@ -124,3 +124,4 @@ with col2:
 
 st.subheader(f"İşlem: {st.session_state.islem_sayaci}")
 st.text_area("Sonuçlar", value=st.session_state.sonuclar, height=300)
+
