@@ -1,6 +1,31 @@
 import streamlit as st
 from math import floor, ceil
 
+st.set_page_config(
+    page_title="CezaHesapMakinesi-Kenan ŞENLİK",
+    page_icon="icon.ico",
+    layout="centered"
+)
+
+st.image("icon.png", width=64)
+
+st.markdown("""
+<style>
+div.stButton > button:first-child {
+    height: 3em;
+    width: 100%;
+}
+div.stButton > button[kind="secondary"] {
+    background-color: #66bb6a;
+    color: white;
+}
+div.stButton > button[kind="primary"] {
+    background-color: #ef5350;
+    color: white;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ================= YARDIMCI =================
 
 def kesir_oku(s):
@@ -36,7 +61,6 @@ def hesapla(artis, yil, ay, gun, gun_para, oran, islem_sayaci):
     sonuc_ay = ay
     sonuc_gun = gun
 
-    # --- ORİJİNAL MANTIĞI KORUDUK ---
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
     yil_degisim = (tam_yil // payda) * pay
@@ -96,14 +120,14 @@ def hesapla(artis, yil, ay, gun, gun_para, oran, islem_sayaci):
 
     return sonuc_yil, sonuc_ay, sonuc_gun, int(gun_para_sonuc), islem_sayaci, mesaj
 
-# ================= STREAMLIT ARAYÜZ =================
+# ================= STREAMLIT =================
 
-st.title("CezaHesapMakinesi")
-st.sidebar.info("CezaHesapMakinesi 1.0\n Kenan Şenlik")
+st.title("CezaHesapMakinesi-Kenan ŞENLİK")
+st.sidebar.info("CezaHesapMakinesi 1.0\nHakim Kenan Şenlik")
 
-if 'islem_sayaci' not in st.session_state:
+if "islem_sayaci" not in st.session_state:
     st.session_state.islem_sayaci = 0
-if 'sonuclar' not in st.session_state:
+if "sonuclar" not in st.session_state:
     st.session_state.sonuclar = ""
 
 yil = st.number_input("Yıl", min_value=0, value=0, step=1)
@@ -114,14 +138,18 @@ oran = st.text_input("Oran", value="1/6")
 
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("ARTIR"):
-        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(True, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci)
+    if st.button("ARTIR", type="primary"):
+        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(
+            True, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
+        )
         st.session_state.sonuclar += mesaj
+
 with col2:
-    if st.button("İNDİR"):
-        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(False, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci)
+    if st.button("İNDİR", type="secondary"):
+        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(
+            False, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
+        )
         st.session_state.sonuclar += mesaj
 
 st.subheader(f"İşlem: {st.session_state.islem_sayaci}")
 st.text_area("Sonuçlar", value=st.session_state.sonuclar, height=300)
-
