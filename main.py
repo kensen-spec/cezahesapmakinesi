@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 from math import floor, ceil
 
@@ -24,48 +23,20 @@ def gun_para_hesapla(gun, pay, payda, artis):
     sonuc = gun + degisim if artis else gun - degisim
     return max(0, sonuc)
 
-# ================= STREAMLIT UI =================
+# ================= HESAPLAMA =================
 
-st.set_page_config(page_title="CezaHesapMakinesi-Kenan ŞENLİK", layout="centered")
-st.title("CezaHesapMakinesi")
-st.caption("Hakim Kenan Şenlik")
-
-if 'islem_sayaci' not in st.session_state:
-    st.session_state.islem_sayaci = 0
-if 'gecmis' not in st.session_state:
-    st.session_state.gecmis = ""
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    input_yil = st.number_input("Yıl", min_value=0, value=0, step=1)
-with col2:
-    input_ay = st.number_input("Ay", min_value=0, value=0, step=1)
-with col3:
-    input_gun = st.number_input("Gün", min_value=0, value=0, step=1)
-
-e_gun_para_val = st.number_input("Gün Para", min_value=0, value=0, step=1)
-e_oran_val = st.text_input("Oran", value="1/6")
-
-btn_col1, btn_col2 = st.columns(2)
-
-# ================= HESAPLAMA MANTIĞI (KORUNDU) =================
-
-def yurut(artis):
-    yil = input_yil
-    ay = input_ay
-    gun = input_gun
-    gun_para = e_gun_para_val
-    
-    kesir = kesir_oku(e_oran_val)
+def hesapla(artis, yil, ay, gun, gun_para, oran, islem_sayaci):
+    kesir = kesir_oku(oran)
     if not kesir:
         st.error("Oran geçersiz (örn: 1/6)")
-        return
-
+        return yil, ay, gun, gun_para, islem_sayaci, ""
     pay, payda = kesir
+
     sonuc_yil = yil
     sonuc_ay = ay
     sonuc_gun = gun
 
+    # --- ORİJİNAL MANTIĞI KORUDUK ---
     tam_yil = (yil // payda) * payda
     kalan_yil = yil - tam_yil
     yil_degisim = (tam_yil // payda) * pay
@@ -106,7 +77,7 @@ def yurut(artis):
     sonuc_gun = max(0, int(sonuc_gun))
 
     gun_para_sonuc = gun_para_hesapla(gun_para, pay, payda, artis)
-    st.session_state.islem_sayaci += 1
+    islem_sayaci += 1
 
     girilen_list = []
     if yil: girilen_list.append(f"{yil} yıl")
@@ -121,16 +92,35 @@ def yurut(artis):
     sonuc_str = " ".join(sonuc_list) if sonuc_list else "0 gün"
 
     islem_text = "artırıldı" if artis else "indirildi"
-    mesaj = f"{girilen_str} {pay}/{payda} oranında {islem_text} → {sonuc_str} yaptı. (Para: {int(gun_para_sonuc)})\n\n"
-    st.session_state.gecmis = mesaj + st.session_state.gecmis
+    mesaj = f"{girilen_str} {pay}/{payda} oranında {islem_text} → {sonuc_str} yaptı.\n---\n"
 
-if btn_col1.button("ARTIR", use_container_width=True):
-    yurut(True)
+    return sonuc_yil, sonuc_ay, sonuc_gun, int(gun_para_sonuc), islem_sayaci, mesaj
 
-if btn_col2.button("İNDİR", use_container_width=True):
-    yurut(False)
+# ================= STREAMLIT ARAYÜZ =================
 
-st.write(f"**İşlem Sayısı:** {st.session_state.islem_sayaci}")
-st.text_area("Sonuçlar", value=st.session_state.gecmis, height=300)
+st.title("CezaHesapMakinesi-Kenan ŞENLİK")
+st.sidebar.info("CezaHesapMakinesi 1.0\nHakim Kenan Şenlik")
 
-```
+if 'islem_sayaci' not in st.session_state:
+    st.session_state.islem_sayaci = 0
+if 'sonuclar' not in st.session_state:
+    st.session_state.sonuclar = ""
+
+yil = st.number_input("Yıl", min_value=0, value=0, step=1)
+ay = st.number_input("Ay", min_value=0, value=0, step=1)
+gun = st.number_input("Gün", min_value=0, value=0, step=1)
+gun_para = st.number_input("Gün Para", min_value=0, value=0, step=1)
+oran = st.text_input("Oran", value="1/6")
+
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("ARTIR"):
+        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(True, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci)
+        st.session_state.sonuclar += mesaj
+with col2:
+    if st.button("İNDİR"):
+        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(False, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci)
+        st.session_state.sonuclar += mesaj
+
+st.subheader(f"İşlem: {st.session_state.islem_sayaci}")
+st.text_area("Sonuçlar", value=st.session_state.sonuclar, height=300)
