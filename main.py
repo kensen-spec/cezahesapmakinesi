@@ -3,7 +3,6 @@ from math import floor, ceil
 
 st.set_page_config(
     page_title="CezaHesapMakinesi-Kenan ŞENLİK",
-    page_icon="icon.ico",
     layout="centered"
 )
 
@@ -116,10 +115,11 @@ if "sonuclar" not in st.session_state:
 
 st.title("CezaHesapMakinesi-Kenan ŞENLİK")
 
-yil = st.number_input("Yıl", min_value=0, step=1, key="yil")
-ay = st.number_input("Ay", min_value=0, step=1, key="ay")
-gun = st.number_input("Gün", min_value=0, step=1, key="gun")
-gun_para = st.number_input("Gün Para", min_value=0, step=1, key="gun_para")
+# Widget keyleri farklı!
+yil_input = st.number_input("Yıl", min_value=0, step=1, value=st.session_state.yil)
+ay_input = st.number_input("Ay", min_value=0, step=1, value=st.session_state.ay)
+gun_input = st.number_input("Gün", min_value=0, step=1, value=st.session_state.gun)
+gun_para_input = st.number_input("Gün Para", min_value=0, step=1, value=st.session_state.gun_para)
 oran = st.text_input("Oran", value="1/6")
 
 col1, col2 = st.columns(2)
@@ -127,7 +127,8 @@ col1, col2 = st.columns(2)
 with col1:
     if st.button("ARTIR", type="primary"):
         y, a, g, gp, st.session_state.islem_sayaci, mesaj = hesapla(
-            True, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
+            True, yil_input, ay_input, gun_input, gun_para_input,
+            oran, st.session_state.islem_sayaci
         )
 
         st.session_state.yil = y
@@ -140,7 +141,8 @@ with col1:
 with col2:
     if st.button("İNDİR", type="secondary"):
         y, a, g, gp, st.session_state.islem_sayaci, mesaj = hesapla(
-            False, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
+            False, yil_input, ay_input, gun_input, gun_para_input,
+            oran, st.session_state.islem_sayaci
         )
 
         st.session_state.yil = y
