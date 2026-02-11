@@ -7,25 +7,6 @@ st.set_page_config(
     layout="centered"
 )
 
-st.image("icon.png", width=64)
-
-st.markdown("""
-<style>
-div.stButton > button:first-child {
-    height: 3em;
-    width: 100%;
-}
-div.stButton > button[kind="secondary"] {
-    background-color: #66bb6a;
-    color: white;
-}
-div.stButton > button[kind="primary"] {
-    background-color: #ef5350;
-    color: white;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # ================= YARDIMCI =================
 
 def kesir_oku(s):
@@ -120,12 +101,8 @@ def hesapla(artis, yil, ay, gun, gun_para, oran, islem_sayaci):
 
     return sonuc_yil, sonuc_ay, sonuc_gun, int(gun_para_sonuc), islem_sayaci, mesaj
 
-# ================= STREAMLIT =================
+# ================= STATE =================
 
-st.title("CezaHesapMakinesi-Kenan ŞENLİK")
-st.sidebar.info("CezaHesapMakinesi 1.0\nHakim Kenan Şenlik")
-
-# Session State Başlatma
 for key in ["yil", "ay", "gun", "gun_para"]:
     if key not in st.session_state:
         st.session_state[key] = 0
@@ -135,7 +112,10 @@ if "islem_sayaci" not in st.session_state:
 if "sonuclar" not in st.session_state:
     st.session_state.sonuclar = ""
 
-# INPUTLAR (state bağlı)
+# ================= ARAYÜZ =================
+
+st.title("CezaHesapMakinesi-Kenan ŞENLİK")
+
 yil = st.number_input("Yıl", min_value=0, step=1, key="yil")
 ay = st.number_input("Ay", min_value=0, step=1, key="ay")
 gun = st.number_input("Gün", min_value=0, step=1, key="gun")
@@ -146,31 +126,29 @@ col1, col2 = st.columns(2)
 
 with col1:
     if st.button("ARTIR", type="primary"):
-        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(
+        y, a, g, gp, st.session_state.islem_sayaci, mesaj = hesapla(
             True, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
         )
 
-        # GİRİŞLERİ SONUÇLA GÜNCELLE
-        st.session_state.yil = yil
-        st.session_state.ay = ay
-        st.session_state.gun = gun
-        st.session_state.gun_para = gun_para
-
+        st.session_state.yil = y
+        st.session_state.ay = a
+        st.session_state.gun = g
+        st.session_state.gun_para = gp
         st.session_state.sonuclar += mesaj
+        st.rerun()
 
 with col2:
     if st.button("İNDİR", type="secondary"):
-        yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(
+        y, a, g, gp, st.session_state.islem_sayaci, mesaj = hesapla(
             False, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
         )
 
-        # GİRİŞLERİ SONUÇLA GÜNCELLE
-        st.session_state.yil = yil
-        st.session_state.ay = ay
-        st.session_state.gun = gun
-        st.session_state.gun_para = gun_para
-
+        st.session_state.yil = y
+        st.session_state.ay = a
+        st.session_state.gun = g
+        st.session_state.gun_para = gp
         st.session_state.sonuclar += mesaj
+        st.rerun()
 
 st.subheader(f"İşlem: {st.session_state.islem_sayaci}")
 st.text_area("Sonuçlar", value=st.session_state.sonuclar, height=300)
