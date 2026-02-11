@@ -125,23 +125,37 @@ def hesapla(artis, yil, ay, gun, gun_para, oran, islem_sayaci):
 st.title("CezaHesapMakinesi-Kenan ŞENLİK")
 st.sidebar.info("CezaHesapMakinesi 1.0\nHakim Kenan Şenlik")
 
+# Session State Başlatma
+for key in ["yil", "ay", "gun", "gun_para"]:
+    if key not in st.session_state:
+        st.session_state[key] = 0
+
 if "islem_sayaci" not in st.session_state:
     st.session_state.islem_sayaci = 0
 if "sonuclar" not in st.session_state:
     st.session_state.sonuclar = ""
 
-yil = st.number_input("Yıl", min_value=0, value=0, step=1)
-ay = st.number_input("Ay", min_value=0, value=0, step=1)
-gun = st.number_input("Gün", min_value=0, value=0, step=1)
-gun_para = st.number_input("Gün Para", min_value=0, value=0, step=1)
+# INPUTLAR (state bağlı)
+yil = st.number_input("Yıl", min_value=0, step=1, key="yil")
+ay = st.number_input("Ay", min_value=0, step=1, key="ay")
+gun = st.number_input("Gün", min_value=0, step=1, key="gun")
+gun_para = st.number_input("Gün Para", min_value=0, step=1, key="gun_para")
 oran = st.text_input("Oran", value="1/6")
 
 col1, col2 = st.columns(2)
+
 with col1:
     if st.button("ARTIR", type="primary"):
         yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(
             True, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
         )
+
+        # GİRİŞLERİ SONUÇLA GÜNCELLE
+        st.session_state.yil = yil
+        st.session_state.ay = ay
+        st.session_state.gun = gun
+        st.session_state.gun_para = gun_para
+
         st.session_state.sonuclar += mesaj
 
 with col2:
@@ -149,6 +163,13 @@ with col2:
         yil, ay, gun, gun_para, st.session_state.islem_sayaci, mesaj = hesapla(
             False, yil, ay, gun, gun_para, oran, st.session_state.islem_sayaci
         )
+
+        # GİRİŞLERİ SONUÇLA GÜNCELLE
+        st.session_state.yil = yil
+        st.session_state.ay = ay
+        st.session_state.gun = gun
+        st.session_state.gun_para = gun_para
+
         st.session_state.sonuclar += mesaj
 
 st.subheader(f"İşlem: {st.session_state.islem_sayaci}")
